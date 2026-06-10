@@ -1,0 +1,85 @@
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    padding: 16px 20px;
+}
+
+.table th {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #888;
+    border-bottom: 2px solid #f0f0f0;
+    padding: 12px 16px;
+}
+
+.table td {
+    font-size: 14px;
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f8f8f8;
+}
+
+.badge-role {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-admin   { background: #fdecea; color: #c0392b; }
+.badge-kasir   { background: #e8f4fd; color: #1a6fa8; }
+.badge-barista { background: #eafaf1; color: #1e8449; }
+.badge-pelayan { background: #fef9e7; color: #b7770d; }
+
+.badge-active   { background: #eafaf1; color: #1e8449; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-inactive { background: #fdecea; color: #c0392b; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+.btn-action {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1.5px solid #e0e0e0;
+    transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 3px rgba(44,62,80,0.1);
+}
+
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+}
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h5 {
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.page-header p {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+}
