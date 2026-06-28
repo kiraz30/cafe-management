@@ -206,13 +206,18 @@ let currentOrderId = null;
 function handleMenuClick(el) {
     const available = el.dataset.available === '1';
     if (!available) return;
-    const menuId = el.dataset.menuId;
+    const menuId = String(el.dataset.menuId);
     addToCart(menuId);
 }
 
 function addToCart(menuId) {
+    menuId = String(menuId); // pastikan tipe sama
     const menu = MENUS[menuId];
-    if (!menu) return;
+    if (!menu) {
+        console.log('Menu tidak ditemukan:', menuId, MENUS);
+        return;
+    }
+
     if (cart[menuId]) {
         cart[menuId].quantity++;
     } else {
@@ -237,18 +242,19 @@ function removeFromCart(menuId) {
 
 function renderCart() {
     const container = document.getElementById('cartItems');
-    const empty     = document.getElementById('cartEmpty');
     const keys      = Object.keys(cart);
 
     if (keys.length === 0) {
-        container.innerHTML = '';
-        container.appendChild(empty);
-        empty.style.display = 'block';
+        container.innerHTML = `
+            <div class="cart-empty">
+                <div style="font-size: 40px;">🛒</div>
+                <div style="margin-top: 8px;">Belum ada pesanan</div>
+                <div style="font-size: 12px; margin-top: 4px;">Klik menu untuk menambahkan</div>
+            </div>`;
         updateSummary();
         return;
     }
 
-    empty.style.display = 'none';
     let html = '';
     keys.forEach(menuId => {
         const item   = cart[menuId];
@@ -262,9 +268,9 @@ function renderCart() {
                 <div class="cart-item-price">Rp ${fmtNum(item.price)}</div>
             </div>
             <div class="cart-item-controls">
-                <button class="qty-btn" onclick="removeFromCart(${menuId})">−</button>
+                <button class="qty-btn" onclick="removeFromCart('${menuId}')">−</button>
                 <span class="qty-num">${item.quantity}</span>
-                <button class="qty-btn" onclick="addToCart(${menuId})">+</button>
+                <button class="qty-btn" onclick="addToCart('${menuId}')">+</button>
             </div>
             <div class="cart-item-subtotal">Rp ${fmtNum(sub)}</div>
         </div>`;
