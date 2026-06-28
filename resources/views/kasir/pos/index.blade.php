@@ -319,6 +319,15 @@ function filterCategory(categoryId, el) {
 
 function showPaymentModal() {
     if (Object.keys(cart).length === 0) return;
+
+    if (orderType === 'dine_in') {
+        const tableId = document.getElementById('tableSelect').value;
+        if (!tableId) {
+            const lanjut = confirm('Meja belum dipilih. Lanjut tanpa meja?');
+            if (!lanjut) return;
+        }
+    }
+
     openModal('modalPaymentMethod');
 }
 
@@ -372,16 +381,20 @@ function calcChange() {
 }
 
 async function confirmPayment(method) {
+    const tableId = document.getElementById('tableSelect')?.value || null;
+
     const orderData = {
         order_type: orderType,
-        table_id:   document.getElementById('tableSelect')?.value || null,
+        table_id:   tableId ? parseInt(tableId) : null,
         notes:      document.getElementById('orderNotes').value,
         items:      Object.values(cart).map(i => ({
-            menu_id:  i.menu_id,
-            quantity: i.quantity,
-            notes:    i.notes,
+            menu_id:  parseInt(i.menu_id),
+            quantity: parseInt(i.quantity),
+            notes:    i.notes || '',
         })),
     };
+
+    console.log('Order data:', orderData); // debug
 
     try {
         const orderRes  = await fetch('{{ route("kasir.pos.store") }}', {
@@ -389,8 +402,20 @@ async function confirmPayment(method) {
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
             body:    JSON.stringify(orderData),
         });
+
+        // Tangkap pesan error validasi
+        if (!orderRes.ok) {
+            const errJson = await orderRes.json();
+            console.log('Validation errors:', errJson);
+            alert('Error: ' + JSON.stringify(errJson.errors ?? errJson.message));
+            return;
+        }
+
         const orderJson = await orderRes.json();
-        if (!orderJson.success) { alert('Gagal membuat order: ' + orderJson.message); return; }
+        if (!orderJson.success) {
+            alert('Gagal membuat order: ' + orderJson.message);
+            return;
+        }
 
         currentOrderId   = orderJson.order_id;
         const amountPaid = method === 'cash'
@@ -402,8 +427,19 @@ async function confirmPayment(method) {
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
             body:    JSON.stringify({ payment_method: method, amount_paid: amountPaid }),
         });
+
+        if (!payRes.ok) {
+            const errJson = await payRes.json();
+            console.log('Payment errors:', errJson);
+            alert('Error pembayaran: ' + JSON.stringify(errJson.errors ?? errJson.message));
+            return;
+        }
+
         const payJson = await payRes.json();
-        if (!payJson.success) { alert('Gagal bayar: ' + payJson.message); return; }
+        if (!payJson.success) {
+            alert('Gagal bayar: ' + payJson.message);
+            return;
+        }
 
         closeModal('modalCash');
         closeModal('modalQris');

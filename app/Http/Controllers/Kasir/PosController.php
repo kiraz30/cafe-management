@@ -66,12 +66,12 @@ class PosController extends Controller
         ]);
 
         // Validasi meja jika dine_in
-        if ($request->order_type === 'dine_in' && !$request->table_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pilih meja untuk dine-in.'
-            ], 422);
-        }
+        // if ($request->order_type === 'dine_in' && !$request->table_id) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Pilih meja untuk dine-in.'
+        //     ], 422);
+        // }
 
         DB::beginTransaction();
         try {
