@@ -15,6 +15,8 @@ use App\Http\Controllers\Kasir\DashboardController as KasirDashboard;
 use App\Http\Controllers\Kasir\PosController;
 use App\Http\Controllers\Barista\DashboardController as BaristaDashboard;
 use App\Http\Controllers\Pelayan\DashboardController as PelayanDashboard;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Kasir\OrderController as KasirOrderController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -36,6 +38,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('tables/{table}/status', [TableController::class, 'updateStatus'])->name('tables.update-status');
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
+
+     // Order
+    Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::delete('orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 });
 
 
@@ -49,6 +56,10 @@ Route::middleware(['auth', 'role:kasir,admin'])->prefix('kasir')->name('kasir.')
     Route::post('/pos/payment/{order}', [PosController::class, 'payment'])->name('pos.payment');
     Route::get('/pos/receipt/{order}', [PosController::class, 'receipt'])->name('pos.receipt');
     Route::post('/pos/cancel/{order}', [PosController::class, 'cancel'])->name('pos.cancel');
+
+    // Order History
+    Route::get('/orders', [KasirOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [KasirOrderController::class, 'show'])->name('orders.show');
 });
 
 // Barista routes

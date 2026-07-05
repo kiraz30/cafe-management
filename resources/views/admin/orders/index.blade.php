@@ -1,0 +1,204 @@
+@extends('layouts.app')
+@section('page-title', 'Riwayat Order')
+@section('content')
+
+<link rel="stylesheet" href="{{ asset('css/orders.css') }}">
+
+<div class="page-header">
+    <h5>Riwayat Order & Transaksi</h5>
+    <p>Semua data transaksi cafe</p>
+</div>
+
+{{-- Summary Cards --}}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="summary-card" style="background: white;">
+            <div>
+                <div class="summary-card-label">Total Order</div>
+                <div class="summary-card-value">{{ number_format($summary['total_orders']) }}</div>
+            </div>
+            <div class="summary-card-icon">📋</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card" style="background: white;">
+            <div>
+                <div class="summary-card-label">Selesai</div>
+                <div class="summary-card-value">{{ number_format($summary['total_completed']) }}</div>
+            </div>
+            <div class="summary-card-icon">✅</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card" style="background: white;">
+            <div>
+                <div class="summary-card-label">Dibatalkan</div>
+                <div class="summary-card-value">{{ number_format($summary['total_cancelled']) }}</div>
+            </div>
+            <div class="summary-card-icon">❌</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card" style="background: white;">
+            <div>
+                <div class="summary-card-label">Total Pendapatan</div>
+                <div class="summary-card-value" style="font-size: 16px;">
+                    Rp {{ number_format($summary['total_revenue'], 0, ',', '.') }}
+                </div>
+            </div>
+            <div class="summary-card-icon">💰</div>
+        </div>
+    </div>
+</div>
+
+{{-- Filter --}}
+<div class="filter-bar">
+    <form method="GET" action="{{ route('admin.orders.index') }}">
+        <div class="filter-group">
+            <span class="filter-label">Cari</span>
+            <input type="text" name="search" class="filter-input"
+                   placeholder="Kode order..." value="{{ request('search') }}">
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Status</span>
+            <select name="status" class="filter-select">
+                <option value="">Semua</option>
+                <option value="pending"   {{ request('status') == 'pending'   ? 'selected' : '' }}>Pending</option>
+                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Tipe</span>
+            <select name="order_type" class="filter-select">
+                <option value="">Semua</option>
+                <option value="dine_in"  {{ request('order_type') == 'dine_in'  ? 'selected' : '' }}>Dine In</option>
+                <option value="take_away" {{ request('order_type') == 'take_away' ? 'selected' : '' }}>Take Away</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Pembayaran</span>
+            <select name="payment_method" class="filter-select">
+                <option value="">Semua</option>
+                <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Tunai</option>
+                <option value="qris" {{ request('payment_method') == 'qris' ? 'selected' : '' }}>QRIS</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Dari Tanggal</span>
+            <input type="date" name="date_from" class="filter-input"
+                   value="{{ request('date_from') }}">
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Sampai Tanggal</span>
+            <input type="date" name="date_to" class="filter-input"
+                   value="{{ request('date_to') }}">
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">&nbsp;</span>
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="filter-btn filter-btn-apply">Filter</button>
+                <a href="{{ route('admin.orders.index') }}" class="filter-btn filter-btn-reset">Reset</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{{-- Tabel Order --}}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span style="font-size: 14px; font-weight: 600;">Daftar Order</span>
+        <span style="font-size: 12px; color: #888;">Total: {{ $orders->total() }} order</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Kode Order</th>
+                        <th>Kasir</th>
+                        <th>Tipe</th>
+                        <th>Meja</th>
+                        <th>Total</th>
+                        <th>Pembayaran</th>
+                        <th>Status</th>
+                        <th>Waktu</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($orders as $order)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>
+                            <span style="font-family: monospace; font-weight: 600;">
+                                {{ $order->order_code }}
+                            </span>
+                        </td>
+                        <td style="font-size: 13px;">{{ $order->user->name }}</td>
+                        <td>
+                            <span class="badge-type {{ $order->order_type === 'dine_in' ? 'badge-dine-in' : 'badge-take-away' }}">
+                                {{ $order->order_type === 'dine_in' ? 'Dine In' : 'Take Away' }}
+                            </span>
+                        </td>
+                        <td style="font-size: 13px;">
+                            {{ $order->table ? 'Meja ' . $order->table->table_number : '-' }}
+                        </td>
+                        <td style="font-weight: 600;">
+                            Rp {{ number_format($order->final_amount, 0, ',', '.') }}
+                        </td>
+                        <td>
+                            @if($order->payment)
+                            <span class="badge-payment badge-{{ $order->payment->payment_method }}">
+                                {{ $order->payment->payment_method === 'cash' ? 'Tunai' : 'QRIS' }}
+                            </span>
+                            @else
+                            <span style="color: #bbb; font-size: 12px;">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge-status badge-{{ $order->status }}">
+                                {{ match($order->status) {
+                                    'pending'   => 'Pending',
+                                    'processing' => 'Diproses',
+                                    'completed' => 'Selesai',
+                                    'cancelled' => 'Dibatalkan',
+                                    default     => $order->status
+                                } }}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px; color: #888;">
+                            {{ $order->created_at->format('d/m/Y H:i') }}
+                        </td>
+                        <td>
+                            <a href="{{ route('admin.orders.show', $order) }}"
+                               class="btn btn-outline-info btn-action me-1">Detail</a>
+                            @if($order->status !== 'completed')
+                            <form action="{{ route('admin.orders.destroy', $order) }}"
+                                  method="POST" class="d-inline"
+                                  onsubmit="return confirm('Yakin hapus order ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline-danger btn-action">Hapus</button>
+                            </form>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="10" class="text-center py-4" style="color: #888;">
+                            Belum ada data order.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if($orders->hasPages())
+    <div class="card-footer bg-white py-3">{{ $orders->links() }}</div>
+    @endif
+</div>
+
+@endsection

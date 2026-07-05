@@ -78,6 +78,13 @@
                 🍽️ Menu
             </a>
         </li>
+        <!-- History Order -->
+        <li class="nav-item mb-1">
+            <a href="{{ route('admin.orders.index') }}"
+            class="nav-link text-white {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+                📋 Riwayat Order
+            </a>
+        </li>
         <li class="nav-item mb-1">
             <a href="{{ route('admin.settings.index') }}"
             class="nav-link text-white {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
@@ -100,6 +107,12 @@
             <a href="#" class="nav-link text-white">
                 🧾 Transaksi
             </a>
+        </li>
+        <li class="nav-item mb-1">
+        <a href="{{ route('kasir.orders.index') }}"
+            class="nav-link text-white {{ request()->routeIs('kasir.orders.*') ? 'active' : '' }}">
+            📋 Riwayat Order
+        </a>
         </li>
     </ul>
     @endif
