@@ -16,7 +16,10 @@
         <span style="font-size: 13px; color: rgba(255,255,255,0.6);">
             {{ auth()->user()->name }}
         </span>
-        <a href="{{ route('admin.dashboard') }}">🏠 Dashboard</a>
+        <a href="{{ auth()->user()->role === 'admin' 
+            ? route('admin.dashboard') 
+            : route('kasir.dashboard') }}">
+            🏠 Dashboard</a>
         <form method="POST" action="{{ route('logout') }}" style="margin:0;">
             @csrf
             <button type="submit">Keluar</button>
