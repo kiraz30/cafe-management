@@ -13,20 +13,28 @@ class Table extends Model
         'table_number',
         'capacity',
         'status',
+        'reserved_name',
+        'reserved_time',
+        'reserved_notes',
     ];
 
-    // public function orders()
-    // {
-    //     return $this->hasMany(Order::class);
-    // }
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 
     public function isAvailable(): bool
     {
         return $this->status === 'available';
     }
-
+ 
     public function isOccupied(): bool
     {
         return $this->status === 'occupied';
+    }
+
+    public function isReserved(): bool
+    {
+        return $this->status === 'reserved';
     }
 }

@@ -47,7 +47,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 
 // Kasir routes
-Route::middleware(['auth', 'role:kasir,admin'])->prefix('kasir')->name('kasir.')->group(function () {
+    Route::middleware(['auth', 'role:kasir,admin'])->prefix('kasir')->name('kasir.')->group(function () {
     Route::get('/dashboard', [KasirDashboard::class, 'index'])->name('dashboard');
 
     // POS
@@ -56,6 +56,12 @@ Route::middleware(['auth', 'role:kasir,admin'])->prefix('kasir')->name('kasir.')
     Route::post('/pos/payment/{order}', [PosController::class, 'payment'])->name('pos.payment');
     Route::get('/pos/receipt/{order}', [PosController::class, 'receipt'])->name('pos.receipt');
     Route::post('/pos/cancel/{order}', [PosController::class, 'cancel'])->name('pos.cancel');
+    Route::get('/pos/kitchen-receipt/{order}', [PosController::class, 'kitchenReceipt'])->name('pos.kitchen-receipt');
+
+    //bn Meja dari POS
+    Route::get('/pos/tables', [PosController::class, 'tables'])->name('pos.tables');
+    Route::post('/pos/tables/{table}', [PosController::class, 'updateTable'])->name('pos.tables.update');
+
 
     // Order History
     Route::get('/orders', [KasirOrderController::class, 'index'])->name('orders.index');
@@ -65,6 +71,7 @@ Route::middleware(['auth', 'role:kasir,admin'])->prefix('kasir')->name('kasir.')
 // Barista routes
 Route::middleware(['auth', 'role:barista'])->prefix('barista')->name('barista.')->group(function () {
     Route::get('/dashboard', [BaristaDashboard::class, 'index'])->name('dashboard');
+    Route::post('/orders/{order}/status', [BaristaDashboard::class,'updateStatus'])->name('orders.update-status');
 });
 
 // Pelayan routes

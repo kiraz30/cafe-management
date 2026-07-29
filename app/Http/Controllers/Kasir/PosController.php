@@ -178,19 +178,20 @@ class PosController extends Controller
                 'reference_number' => $request->reference_number ?? null,
             ]);
 
-            // Update status order
-            $order->update(['status' => 'completed']);
-
-            // Bebaskan meja jika dine_in
-            if ($order->table_id) {
-                Table::find($order->table_id)->update(['status' => 'available']);
+            // Status order tetap "pending" agar barista bisa proses
+            // Hanya update jika belum ada status processing/completed
+            if ($order->status === 'pending') {
+                $order->update(['status' => 'pending']);
             }
+
+            // Bebaskan meja jika dine_in — JANGAN dulu, tunggu barista selesai
+            // Table akan dibebaskan saat barista update status ke completed
 
             DB::commit();
 
             return response()->json([
                 'success'    => true,
-                'message'    => 'Pembayaran berhasil.',
+                'message'    => 'Pembayaran berhasil. Pesanan diteruskan ke dapur.',
                 'order_id'   => $order->id,
                 'change'     => $request->amount_paid - $order->final_amount,
             ]);
@@ -255,5 +256,70 @@ class PosController extends Controller
                 'message' => 'Gagal membatalkan order.',
             ], 500);
         }
+    }
+
+    // Ambil data semua meja untuk panel POS
+    public function tables()
+    {
+        $tables = Table::orderBy('table_number')->get();
+        return response()->json([
+            'success' => true,
+            'tables'  => $tables,
+        ]);
+    }
+
+    // Update status meja dari POS
+    public function updateTable(Request $request, Table $table)
+    {
+        $request->validate([
+            'status'         => 'required|in:available,occupied,reserved',
+            'reserved_name'  => 'nullable|string|max:100',
+            'reserved_time'  => 'nullable|string|max:50',
+            'reserved_notes' => 'nullable|string',
+        ], [
+            'status.required' => 'Status wajib dipilih.',
+        ]);
+
+        // Validasi jika reserved harus ada nama
+        if ($request->status === 'reserved' && !$request->reserved_name) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nama pemesan wajib diisi untuk reservasi.',
+            ], 422);
+        }
+
+        $data = ['status' => $request->status];
+
+        // Jika reserved, simpan info reservasi
+        if ($request->status === 'reserved') {
+            $data['reserved_name']  = $request->reserved_name;
+            $data['reserved_time']  = $request->reserved_time;
+            $data['reserved_notes'] = $request->reserved_notes;
+        } else {
+            // Jika bukan reserved, kosongkan info reservasi
+            $data['reserved_name']  = null;
+            $data['reserved_time']  = null;
+            $data['reserved_notes'] = null;
+        }
+
+        $table->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status meja berhasil diupdate.',
+            'table'   => $table->fresh(),
+        ]);
+    }
+
+    //kitchen
+    public function kitchenReceipt(Order $order)
+    {
+        $order->load(['items.menu', 'table', 'user']);
+
+        $settings = [
+            'cafe_name' => Setting::get('cafe_name', 'Cafe Management'),
+        ];
+
+        return view('kasir.pos.kitchen-receipt', compact('order', 'settings'));
     }
 }

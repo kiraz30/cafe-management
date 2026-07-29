@@ -119,19 +119,14 @@
 
     {{-- Menu Barista --}}
     @if(auth()->user()->role === 'barista')
-    <ul class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item mb-1">
-            <a href="{{ route('barista.dashboard') }}" 
-               class="nav-link text-white {{ request()->routeIs('barista.dashboard') ? 'active' : '' }}">
-                📊 Dashboard
-            </a>
-        </li>
-        <li class="nav-item mb-1">
-            <a href="#" class="nav-link text-white">
-                ☕ Antrian Pesanan
-            </a>
-        </li>
-    </ul>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item mb-1">
+                <a href="{{ route('barista.dashboard') }}"
+                class="nav-link text-white {{ request()->routeIs('barista.dashboard') ? 'active' : '' }}">
+                    👨‍🍳 Kitchen Display
+                </a>
+            </li>
+        </ul>
     @endif
 
     {{-- Menu Pelayan --}}

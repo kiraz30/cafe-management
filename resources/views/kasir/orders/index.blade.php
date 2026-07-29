@@ -150,10 +150,13 @@
                         </td>
                         <td>
                             <a href="{{ route('kasir.orders.show', $order) }}"
-                               class="btn btn-outline-info btn-action me-1">Detail</a>
+                            class="btn btn-outline-info btn-action me-1">Detail</a>
                             <a href="{{ route('kasir.pos.receipt', $order) }}"
-                               target="_blank"
-                               class="btn btn-outline-secondary btn-action">Struk</a>
+                            target="_blank"
+                            class="btn btn-outline-secondary btn-action me-1">Struk</a>
+                            <a href="{{ route('kasir.pos.kitchen-receipt', $order) }}"
+                            target="_blank"
+                            class="btn btn-outline-danger btn-action">Dapur</a>
                         </td>
                     </tr>
                     @empty

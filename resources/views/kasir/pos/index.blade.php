@@ -100,6 +100,9 @@
     <button class="pay-btn" id="payBtn" disabled onclick="showPaymentModal()">
         Bayar
     </button>
+    <button class="table-panel-btn" onclick="openTablePanel()">
+    🪑 Status Meja
+    </button>
 
 </div>
 
@@ -183,9 +186,109 @@
         <div class="success-icon">✅</div>
         <div class="success-title">Pembayaran Berhasil!</div>
         <div class="success-info" id="successInfo"></div>
+
+        <hr style="margin: 16px 0; border-color: #f0f0f0;">
+
+        {{-- Tombol Cetak --}}
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button class="modal-btn modal-btn-confirm" onclick="printReceipt()">
+                🖨️ Struk Customer
+            </button>
+            <button class="modal-btn modal-btn-confirm"
+                    style="background: #c0392b;"
+                    onclick="printKitchenReceipt()">
+                🍳 Struk Dapur
+            </button>
+        </div>
+
+        {{-- Tombol Selesai --}}
+        <button class="modal-btn modal-btn-cancel w-100" onclick="newOrder()">
+            + Order Baru
+        </button>
+    </div>
+</div>
+
+
+{{-- MODAL PANEL MEJA --}}
+<div class="modal-overlay" id="modalTablePanel">
+    <div class="modal-box" style="max-width: 480px;">
+        <div class="modal-title">🪑 Status Meja</div>
+
+        {{-- Legenda --}}
+        <div class="table-legend">
+            <div class="legend-item">
+                <div class="legend-dot available"></div> Tersedia
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot occupied"></div> Terisi
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot reserved"></div> Reservasi
+            </div>
+        </div>
+
+        {{-- Grid Meja --}}
+        <div class="table-grid" id="tableGrid">
+            <div style="text-align:center; color:#888; grid-column: span 3; padding: 20px;">
+                Memuat data meja...
+            </div>
+        </div>
+
         <div class="modal-btns">
-            <button class="modal-btn modal-btn-cancel" onclick="newOrder()">+ Order Baru</button>
-            <button class="modal-btn modal-btn-confirm" onclick="printReceipt()">🖨️ Cetak Struk</button>
+            <button class="modal-btn modal-btn-cancel"
+                    onclick="closeModal('modalTablePanel')">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL UPDATE STATUS MEJA --}}
+<div class="modal-overlay" id="modalUpdateTable">
+    <div class="modal-box" style="max-width: 380px;">
+        <div class="modal-title" id="updateTableTitle">Update Meja</div>
+
+        {{-- Pilih Status --}}
+        <div style="font-size: 13px; font-weight: 600; color: #444; margin-bottom: 8px;">
+            Status Meja
+        </div>
+        <div class="table-status-options">
+            <div class="table-status-option" data-status="available"
+                 onclick="selectTableStatus('available', this)">
+                🟢 Tersedia
+            </div>
+            <div class="table-status-option" data-status="occupied"
+                 onclick="selectTableStatus('occupied', this)">
+                🔴 Terisi
+            </div>
+            <div class="table-status-option" data-status="reserved"
+                 onclick="selectTableStatus('reserved', this)">
+                🟡 Reservasi
+            </div>
+        </div>
+
+        {{-- Form Reservasi --}}
+        <div class="reservation-form" id="reservationForm">
+            <div style="font-size: 13px; font-weight: 600; color: #444; margin-bottom: 8px;">
+                Info Reservasi
+            </div>
+            <input type="text" class="reservation-input" id="reservedName"
+                   placeholder="Nama pemesan *">
+            <input type="text" class="reservation-input" id="reservedTime"
+                   placeholder="Waktu reservasi (contoh: 19.00)">
+            <input type="text" class="reservation-input" id="reservedNotes"
+                   placeholder="Catatan (opsional)">
+        </div>
+
+        <div class="modal-btns">
+            <button class="modal-btn modal-btn-cancel"
+                    onclick="closeModal('modalUpdateTable')">
+                Batal
+            </button>
+            <button class="modal-btn modal-btn-confirm"
+                    onclick="confirmUpdateTable()">
+                ✓ Simpan
+            </button>
         </div>
     </div>
 </div>
@@ -456,7 +559,7 @@ async function confirmPayment(method) {
 }
 
 function newOrder() {
-    cart = {};
+    cart          = {};
     currentOrderId = null;
     renderCart();
     closeModal('modalSuccess');
@@ -465,9 +568,12 @@ function newOrder() {
 }
 
 function printReceipt() {
-    if (currentOrderId) window.open(`/kasir/pos/receipt/${currentOrderId}`, '_blank');
-    newOrder();
+    if (currentOrderId) {
+        window.open(`/kasir/pos/receipt/${currentOrderId}`, '_blank');
+    }
+    // tidak menutup modal
 }
+
 
 function calcTotal() {
     let subtotal = 0;
@@ -477,10 +583,181 @@ function calcTotal() {
     return subtotal + tax - discount;
 }
 
+
+function printKitchenReceipt() {
+    if (currentOrderId) {
+        window.open(`/kasir/pos/kitchen-receipt/${currentOrderId}`, '_blank');
+    }
+    // tidak menutup modal
+}
+
 function fmtNum(n)           { return Math.round(n).toLocaleString('id-ID'); }
 function roundUp(amount, to) { return Math.ceil(amount / to) * to; }
 function openModal(id)       { document.getElementById(id).classList.add('show'); }
 function closeModal(id)      { document.getElementById(id).classList.remove('show'); }
+
+
+
+
+// =====================
+// TABLE PANEL
+// =====================
+let selectedTableId     = null;
+let selectedTableStatus = null;
+
+async function openTablePanel() {
+    openModal('modalTablePanel');
+    await loadTables();
+}
+
+async function loadTables() {
+    try {
+        const res  = await fetch('{{ route("kasir.pos.tables") }}');
+        const data = await res.json();
+
+        if (!data.success) return;
+
+        const grid = document.getElementById('tableGrid');
+        if (data.tables.length === 0) {
+            grid.innerHTML = `<div style="text-align:center;color:#888;grid-column:span 3;padding:20px;">
+                Belum ada data meja.
+            </div>`;
+            return;
+        }
+
+        grid.innerHTML = data.tables.map(table => {
+            const icon = table.status === 'available' ? '🟢'
+                       : table.status === 'occupied'  ? '🔴' : '🟡';
+            const label = table.status === 'available' ? 'Tersedia'
+                        : table.status === 'occupied'  ? 'Terisi' : 'Reservasi';
+            const info = table.status === 'reserved' && table.reserved_name
+                ? `<div style="font-size:10px;color:#b7770d;margin-top:2px;">${table.reserved_name}</div>`
+                : '';
+            return `
+            <div class="table-item ${table.status}" onclick="openUpdateTable(${table.id}, '${table.table_number}', '${table.status}')">
+                <div class="table-item-icon">${icon}</div>
+                <div class="table-item-number">Meja ${table.table_number}</div>
+                <div class="table-item-status">${label}</div>
+                ${info}
+            </div>`;
+        }).join('');
+
+    } catch (err) {
+        console.error('Gagal load meja:', err);
+    }
+}
+
+function openUpdateTable(tableId, tableNumber, currentStatus) {
+    selectedTableId = tableId;
+    document.getElementById('updateTableTitle').textContent = `Update Meja ${tableNumber}`;
+
+    // Reset form
+    document.querySelectorAll('.table-status-option').forEach(el => {
+        el.className = 'table-status-option';
+    });
+    document.getElementById('reservationForm').classList.remove('show');
+    document.getElementById('reservedName').value  = '';
+    document.getElementById('reservedTime').value  = '';
+    document.getElementById('reservedNotes').value = '';
+
+    // Set status aktif
+    const activeEl = document.querySelector(`.table-status-option[data-status="${currentStatus}"]`);
+    if (activeEl) selectTableStatus(currentStatus, activeEl);
+
+    closeModal('modalTablePanel');
+    openModal('modalUpdateTable');
+}
+
+function selectTableStatus(status, el) {
+    selectedTableStatus = status;
+    document.querySelectorAll('.table-status-option').forEach(opt => {
+        opt.className = 'table-status-option';
+    });
+    el.classList.add(`active-${status}`);
+
+    // Tampilkan form reservasi jika reserved
+    const reservForm = document.getElementById('reservationForm');
+    if (status === 'reserved') {
+        reservForm.classList.add('show');
+    } else {
+        reservForm.classList.remove('show');
+    }
+}
+
+async function confirmUpdateTable() {
+    if (!selectedTableId || !selectedTableStatus) return;
+
+    // Validasi nama jika reserved
+    if (selectedTableStatus === 'reserved') {
+        const name = document.getElementById('reservedName').value.trim();
+        if (!name) {
+            alert('Nama pemesan wajib diisi untuk reservasi.');
+            return;
+        }
+    }
+
+    const body = {
+        status:          selectedTableStatus,
+        reserved_name:   document.getElementById('reservedName').value,
+        reserved_time:   document.getElementById('reservedTime').value,
+        reserved_notes:  document.getElementById('reservedNotes').value,
+    };
+
+    try {
+        const res  = await fetch(`/kasir/pos/tables/${selectedTableId}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body:    JSON.stringify(body),
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            alert('Gagal update: ' + data.message);
+            return;
+        }
+
+        closeModal('modalUpdateTable');
+        openModal('modalTablePanel');
+         // Refresh grid meja & dropdown sekaligus
+        await Promise.all([
+            loadTables(),
+            refreshTableSelect(),
+        ]);
+
+    } catch (err) {
+        alert('Terjadi kesalahan. Coba lagi.');
+        console.error(err);
+    }
+}
+
+// Refresh dropdown meja di panel order
+async function refreshTableSelect() {
+    try {
+        const res  = await fetch('{{ route("kasir.pos.tables") }}');
+        const data = await res.json();
+        if (!data.success) return;
+
+        const select = document.getElementById('tableSelect');
+        const currentVal = select.value;
+
+        // Rebuild options — hanya tampilkan meja available
+        select.innerHTML = '<option value="">-- Tanpa Meja --</option>';
+        data.tables.forEach(table => {
+            if (table.status === 'available') {
+                const option = document.createElement('option');
+                option.value       = table.id;
+                option.textContent = `Meja ${table.table_number} (${table.capacity} orang)`;
+                select.appendChild(option);
+            }
+        });
+
+        // Pertahankan pilihan sebelumnya jika masih available
+        if (currentVal) select.value = currentVal;
+
+    } catch (err) {
+        console.error('Gagal refresh dropdown meja:', err);
+    }
+}
 </script>
 
 @endsection
