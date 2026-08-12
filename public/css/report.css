@@ -1,0 +1,172 @@
+/* =====================
+   PAGE HEADER
+   ===================== */
+.page-header { margin-bottom: 24px; }
+.page-header h5 { font-weight: 700; color: #2c3e50; margin: 0; }
+.page-header p  { font-size: 13px; color: #888; margin: 0; }
+
+/* =====================
+   FILTER BAR
+   ===================== */
+.filter-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.filter-bar form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; }
+.filter-input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid #e0e0e0;
+    font-size: 13px;
+    color: #333;
+    transition: all 0.2s;
+}
+.filter-input:focus { outline: none; border-color: #2c3e50; }
+.filter-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+.filter-btn-apply  { background: #2c3e50; color: white; }
+.filter-btn-apply:hover  { background: #3d5a73; color: white; }
+.filter-btn-export { background: #1e8449; color: white; }
+.filter-btn-export:hover { background: #196f3d; color: white; }
+
+/* =====================
+   SUMMARY CARDS
+   ===================== */
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid transparent;
+}
+.stat-card.blue   { border-left-color: #1a6fa8; }
+.stat-card.green  { border-left-color: #1e8449; }
+.stat-card.yellow { border-left-color: #b7770d; }
+.stat-card.red    { border-left-color: #c0392b; }
+.stat-card.dark   { border-left-color: #2c3e50; }
+.stat-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.stat-value { font-size: 22px; font-weight: 700; color: #2c3e50; }
+.stat-value.small { font-size: 15px; }
+.stat-icon  { font-size: 32px; opacity: 0.8; }
+
+/* =====================
+   SECTION CARD
+   ===================== */
+.section-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+.section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.section-title    { font-size: 14px; font-weight: 700; color: #2c3e50; }
+.section-subtitle { font-size: 12px; color: #888; }
+.section-body     { padding: 20px; }
+
+/* =====================
+   TABLE
+   ===================== */
+.report-table th {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #888;
+    border-bottom: 2px solid #f0f0f0;
+    padding: 10px 14px;
+    white-space: nowrap;
+}
+.report-table td {
+    font-size: 13px;
+    padding: 10px 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f8f8f8;
+}
+.report-table tr:last-child td { border-bottom: none; }
+
+/* =====================
+   BADGES
+   ===================== */
+.badge-status {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-completed  { background: #eafaf1; color: #1e8449; }
+.badge-cancelled  { background: #fdecea; color: #c0392b; }
+.badge-pending    { background: #fef9e7; color: #b7770d; }
+.badge-processing { background: #e8f4fd; color: #1a6fa8; }
+
+.badge-payment {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-cash { background: #eafaf1; color: #1e8449; }
+.badge-qris { background: #e8f4fd; color: #1a6fa8; }
+
+/* =====================
+   TOP MENU
+   ===================== */
+.top-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+.top-menu-item:last-child { border-bottom: none; }
+.top-menu-rank {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #555;
+    flex-shrink: 0;
+}
+.top-menu-rank.gold   { background: #fef9e7; color: #b7770d; }
+.top-menu-rank.silver { background: #f0f0f0; color: #666; }
+.top-menu-rank.bronze { background: #fdecea; color: #c0392b; }
+.top-menu-name  { font-size: 13px; font-weight: 600; color: #2c3e50; flex: 1; }
+.top-menu-qty   { font-size: 14px; font-weight: 700; color: #2c3e50; }
+
+/* =====================
+   EMPTY STATE
+   ===================== */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #bbb;
+}
+.empty-state-icon { font-size: 36px; margin-bottom: 8px; }
+.empty-state-text { font-size: 13px; }

@@ -11,12 +11,14 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Kasir\DashboardController as KasirDashboard;
 use App\Http\Controllers\Kasir\PosController;
 use App\Http\Controllers\Barista\DashboardController as BaristaDashboard;
 use App\Http\Controllers\Pelayan\DashboardController as PelayanDashboard;
-use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Kasir\OrderController as KasirOrderController;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -43,7 +45,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::delete('orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
-});
+
+    //export report
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/export/excel', [ReportController::class, 'export'])->name('reports.export.excel');
+    });
 
 
 // Kasir routes

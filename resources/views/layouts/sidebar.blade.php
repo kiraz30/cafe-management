@@ -30,8 +30,9 @@
             </a>
         </li>
         <li class="nav-item mb-1">
-            <a href="#" class="nav-link text-white">
-                📈 Laporan
+            <a href="{{ route('admin.reports.index') }}"
+            class="nav-link text-white {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                📊 Laporan
             </a>
         </li>
         <li class="nav-item mb-1">
