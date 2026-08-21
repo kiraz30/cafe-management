@@ -13,6 +13,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\MidtransService;
 
 class PosController extends Controller
 {
@@ -321,5 +322,76 @@ class PosController extends Controller
         ];
 
         return view('kasir.pos.kitchen-receipt', compact('order', 'settings'));
+    }
+
+    // Buat QRIS dinamis
+    public function createQris(Request $request, Order $order)
+    {
+        try {
+            $midtrans = new MidtransService();
+            $result   = $midtrans->createQrisTransaction([
+                'order_code'   => $order->order_code,
+                'final_amount' => $order->final_amount,
+            ]);
+
+            return response()->json([
+                'success'     => true,
+                'qr_code_url' => $result['qr_code_url'],
+                'order_id'    => $result['order_id'],
+                'expire_time' => $result['expire_time'],
+                'qr_string'   => $result['qr_string'],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat QRIS: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // Cek status pembayaran QRIS
+    public function checkQrisStatus(Request $request, Order $order)
+    {
+        try {
+            $midtransOrderId = $request->midtrans_order_id;
+            $midtrans        = new MidtransService();
+            $status          = $midtrans->checkStatus($midtransOrderId);
+
+            $paid = in_array($status, ['settlement', 'capture']);
+
+            if ($paid) {
+                // Proses pembayaran
+                DB::beginTransaction();
+                try {
+                    Payment::create([
+                        'order_id'         => $order->id,
+                        'amount_paid'      => $order->final_amount,
+                        'payment_method'   => 'qris',
+                        'status'           => 'paid',
+                        'reference_number' => $midtransOrderId,
+                    ]);
+
+                    $order->update(['status' => 'pending']);
+
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'paid'    => $paid,
+                'status'  => $status,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

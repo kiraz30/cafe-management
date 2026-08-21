@@ -68,6 +68,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/pos/tables', [PosController::class, 'tables'])->name('pos.tables');
     Route::post('/pos/tables/{table}', [PosController::class, 'updateTable'])->name('pos.tables.update');
 
+    //QRIS Dinamis
+    Route::post('/pos/qris/{order}', [PosController::class, 'createQris'])->name('pos.qris.create');
+    Route::post('/pos/qris/{order}/check', [PosController::class, 'checkQrisStatus'])->name('pos.qris.check');
+
 
     // Order History
     Route::get('/orders', [KasirOrderController::class, 'index'])->name('orders.index');

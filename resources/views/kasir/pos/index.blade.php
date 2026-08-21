@@ -12,10 +12,14 @@
 <div class="pos-left">
 
     <div class="category-tabs">
-        <button class="category-tab active" onclick="filterCategory('all', this)">Semua</button>
+        <button class="category-tab active" data-category="all" onclick="filterCategory(this)">
+            Semua
+        </button>
         @foreach($categories as $cat)
         @if($cat->menus_count > 0)
-
+        <button class="category-tab" data-category="{{ $cat->id }}" onclick="filterCategory(this)">
+            {{ $cat->name }}
+        </button>
         @endif
         @endforeach
     </div>
@@ -157,26 +161,102 @@
 <div class="modal-overlay" id="modalQris">
     <div class="modal-box">
         <div class="modal-title">📱 Pembayaran QRIS</div>
+
         <div class="modal-total-box" style="text-align:center;">
             <div class="modal-total-label">Total Tagihan</div>
             <div class="modal-total-amount" id="qrisTotal">Rp 0</div>
         </div>
-        @if($settings['qris_type'] === 'static' && $settings['qris_image'])
-        <div class="qris-image-wrap">
-            <img src="{{ asset('storage/' . $settings['qris_image']) }}" alt="QR Code">
-            <div class="qris-scan-hint">Scan QR Code untuk membayar</div>
-        </div>
+
+        {{-- QRIS Statis --}}
+        @if($settings['qris_type'] === 'static')
+            @if($settings['qris_image'])
+            <div class="qris-image-wrap">
+                <img src="{{ asset('storage/' . $settings['qris_image']) }}" alt="QR Code">
+                <div class="qris-scan-hint">Scan QR Code untuk membayar</div>
+            </div>
+            @else
+            <div style="text-align:center; padding: 20px; color: #888; font-size: 13px;">
+                QR Code belum dikonfigurasi. Silakan upload di Pengaturan.
+            </div>
+            @endif
+            <div class="modal-btns">
+                <button class="modal-btn modal-btn-cancel" onclick="closeModal('modalQris')">Batal</button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmPayment('qris')">
+                    ✓ Sudah Dibayar
+                </button>
+            </div>
+
+        {{-- QRIS Dinamis --}}
         @else
-        <div style="text-align:center; padding: 20px; color: #888; font-size: 13px;">
-            QR Code belum dikonfigurasi. Silakan upload di Pengaturan.
-        </div>
+            {{-- Loading --}}
+            <div id="qrisDynamicLoading" style="text-align:center; padding: 30px;">
+                <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+                <div style="font-size: 13px; color: #888;">Membuat QR Code...</div>
+            </div>
+
+
+            {{-- QR Code --}}
+            <div id="qrisDynamicContent" style="display:none;">
+                <div class="qris-image-wrap">
+                    <img id="qrisDynamicImage" src="" alt="QR Code">
+                    <div class="qris-scan-hint">Scan QR Code untuk membayar</div>
+                    <div id="qrisExpireTime" style="font-size: 11px; color: #c0392b; margin-top: 4px;"></div>
+                </div>
+
+                {{-- Status Cek Otomatis --}}
+                <div style="background: #f8f9fa; border-radius: 8px; padding: 10px; text-align: center; margin-bottom: 16px;">
+                    <div style="font-size: 12px; color: #888;">Status pembayaran dicek otomatis setiap 5 detik</div>
+                    <div id="qrisStatusText" style="font-size: 13px; font-weight: 600; color: #b7770d; margin-top: 4px;">
+                        ⏳ Menunggu pembayaran...
+                    </div>
+                </div>
+
+                {{-- QR String untuk Sandbox Testing --}}
+                @if(config('app.env') === 'local')
+                <div style="background: #fff9e6; border: 1px solid #f0c040; border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #b7770d; margin-bottom: 4px;">
+                        🧪 SANDBOX — QR String untuk Simulator
+                    </div>
+                    <div id="qrisStringText" style="font-size: 10px; color: #555; word-break: break-all; max-height: 60px; overflow-y: auto;"></div>
+                    <div style="display: flex; gap: 6px; margin-top: 6px;">
+                        <button onclick="copyQrisString()"
+                                style="font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #b7770d; background: white; cursor: pointer; color: #b7770d;">
+                            📋 Copy QR String
+                        </button>
+                        <a href="https://simulator.sandbox.midtrans.com/qris/index"
+                        target="_blank"
+                        style="font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #1a6fa8; background: white; cursor: pointer; color: #1a6fa8; text-decoration: none;">
+                            🔗 Buka Simulator
+                        </a>
+                    </div>
+                </div>
+                @endif
+
+                @if(config('app.env') === 'local')
+                <div style="margin-bottom: 12px;">
+                    <button onclick="simulatePaid()"
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 2px dashed #1e8449; background: #eafaf1; color: #1e8449; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        🧪 Simulasi: Tandai Pembayaran Berhasil
+                    </button>
+                </div>
+                @endif
+
+            </div>
+
+            {{-- Error --}}
+            <div id="qrisDynamicError" style="display:none; text-align:center; padding: 20px;">
+                <div style="font-size: 32px; margin-bottom: 8px;">❌</div>
+                <div id="qrisErrorText" style="font-size: 13px; color: #c0392b;"></div>
+            </div>
+
+            <div class="modal-btns">
+                <button class="modal-btn modal-btn-cancel" onclick="cancelQrisDynamic()">Batal</button>
+                <button class="modal-btn modal-btn-confirm" id="qrisManualConfirm"
+                        style="display:none;" onclick="confirmPayment('qris')">
+                    ✓ Konfirmasi Manual
+                </button>
+            </div>
         @endif
-        <div class="modal-btns">
-            <button class="modal-btn modal-btn-cancel" onclick="closeModal('modalQris')">Batal</button>
-            <button class="modal-btn modal-btn-confirm" onclick="confirmPayment('qris')">
-                ✓ Sudah Dibayar
-            </button>
-        </div>
     </div>
 </div>
 
@@ -412,11 +492,14 @@ function setOrderType(type, el) {
     document.getElementById('tableSelectWrap').style.display = type === 'dine_in' ? 'block' : 'none';
 }
 
-function filterCategory(categoryId, el) {
+function filterCategory(el) {
+    const categoryId = el.dataset.category;
     document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     document.querySelectorAll('.menu-card').forEach(card => {
-        card.style.display = (categoryId === 'all' || card.dataset.category == categoryId) ? 'block' : 'none';
+        card.style.display = (categoryId === 'all' || card.dataset.category == categoryId)
+            ? 'block'
+            : 'none';
     });
 }
 
@@ -440,7 +523,32 @@ function selectPaymentMethod(method, el) {
     el.classList.add('active');
 }
 
-function proceedPayment() {
+// function proceedPayment() {
+//     closeModal('modalPaymentMethod');
+//     const total = calcTotal();
+
+//     if (paymentMethod === 'cash') {
+//         document.getElementById('cashTotal').textContent = 'Rp ' + fmtNum(total);
+//         document.getElementById('cashReceived').value    = '';
+//         document.getElementById('changeWrap').style.display  = 'none';
+//         document.getElementById('confirmCashBtn').disabled   = true;
+
+//         const quickAmounts = [total, roundUp(total, 50000), roundUp(total, 100000), 200000]
+//             .filter((v, i, a) => a.indexOf(v) === i);
+//         document.getElementById('quickCashBtns').innerHTML = quickAmounts
+//             .map(a => `<button class="quick-cash-btn" onclick="setQuickCash(${a})">Rp ${fmtNum(a)}</button>`)
+//             .join('');
+
+//         openModal('modalCash');
+//     } else {
+//         document.getElementById('qrisTotal').textContent = 'Rp ' + fmtNum(total);
+//         openModal('modalQris');
+//     }
+// }
+let midtransOrderId  = null;
+let qrisCheckInterval = null;
+
+async function proceedPayment() {
     closeModal('modalPaymentMethod');
     const total = calcTotal();
 
@@ -457,9 +565,173 @@ function proceedPayment() {
             .join('');
 
         openModal('modalCash');
+
     } else {
         document.getElementById('qrisTotal').textContent = 'Rp ' + fmtNum(total);
         openModal('modalQris');
+
+        // Jika QRIS dinamis, buat order dulu lalu generate QR
+        @if($settings['qris_type'] === 'dynamic')
+        await createOrderAndGenerateQris();
+        @endif
+    }
+}
+
+@if($settings['qris_type'] === 'dynamic')
+async function createOrderAndGenerateQris() {
+    // Reset tampilan
+    document.getElementById('qrisDynamicLoading').style.display  = 'block';
+    document.getElementById('qrisDynamicContent').style.display  = 'none';
+    document.getElementById('qrisDynamicError').style.display    = 'none';
+    document.getElementById('qrisManualConfirm').style.display   = 'none';
+
+    const orderData = {
+        order_type: orderType,
+        table_id:   document.getElementById('tableSelect')?.value || null,
+        notes:      document.getElementById('orderNotes').value,
+        items:      Object.values(cart).map(i => ({
+            menu_id:  parseInt(i.menu_id),
+            quantity: parseInt(i.quantity),
+            notes:    i.notes || '',
+        })),
+    };
+
+    try {
+        // 1. Buat order dulu
+        const orderRes  = await fetch('{{ route("kasir.pos.store") }}', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body:    JSON.stringify(orderData),
+        });
+        const orderJson = await orderRes.json();
+        if (!orderJson.success) {
+            showQrisError('Gagal membuat order: ' + orderJson.message);
+            return;
+        }
+
+        currentOrderId = orderJson.order_id;
+
+        // 2. Generate QR Code
+        const qrisRes  = await fetch(`/kasir/pos/qris/${currentOrderId}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body:    JSON.stringify({}),
+        });
+        const qrisJson = await qrisRes.json();
+
+        if (!qrisJson.success) {
+            showQrisError('Gagal membuat QR Code: ' + qrisJson.message);
+            return;
+        }
+
+        midtransOrderId = qrisJson.order_id;
+
+        // 3. Tampilkan QR Code
+        document.getElementById('qrisDynamicLoading').style.display = 'none';
+        document.getElementById('qrisDynamicContent').style.display = 'block';
+        document.getElementById('qrisDynamicImage').src = qrisJson.qr_code_url;
+
+        // Tampilkan QR string untuk sandbox testing
+        const qrisStringEl = document.getElementById('qrisStringText');
+        if (qrisStringEl && qrisJson.qr_string) {
+            qrisStringEl.textContent = qrisJson.qr_string;
+        }
+
+        if (qrisJson.expire_time) {
+            document.getElementById('qrisExpireTime').textContent = 'Berlaku hingga: ' + qrisJson.expire_time;
+        }
+
+        // 4. Mulai cek status otomatis setiap 5 detik
+        startQrisStatusCheck();
+
+    } catch (err) {
+        showQrisError('Terjadi kesalahan. Coba lagi.');
+        console.error(err);
+    }
+}
+
+function copyQrisString() {
+    const text = document.getElementById('qrisStringText').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('QR String berhasil dicopy! Paste di simulator Midtrans.');
+    });
+}
+
+function startQrisStatusCheck() {
+    // Clear interval sebelumnya
+    if (qrisCheckInterval) clearInterval(qrisCheckInterval);
+
+    qrisCheckInterval = setInterval(async () => {
+        try {
+            const res  = await fetch(`/kasir/pos/qris/${currentOrderId}/check`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+                body:    JSON.stringify({ midtrans_order_id: midtransOrderId }),
+            });
+            const data = await res.json();
+
+            if (!data.success) return;
+
+            if (data.paid) {
+                // Pembayaran berhasil
+                clearInterval(qrisCheckInterval);
+                document.getElementById('qrisStatusText').textContent = '✅ Pembayaran diterima!';
+                document.getElementById('qrisStatusText').style.color = '#1e8449';
+
+                setTimeout(() => {
+                    closeModal('modalQris');
+                    document.getElementById('successInfo').textContent = 'Pembayaran via QRIS berhasil';
+                    openModal('modalSuccess');
+                }, 1500);
+
+            } else if (data.status === 'expire') {
+                clearInterval(qrisCheckInterval);
+                showQrisError('QR Code sudah kadaluarsa. Silakan buat ulang.');
+                document.getElementById('qrisManualConfirm').style.display = 'block';
+            }
+
+        } catch (err) {
+            console.error('Gagal cek status QRIS:', err);
+        }
+    }, 5000);
+}
+
+function showQrisError(message) {
+    document.getElementById('qrisDynamicLoading').style.display = 'none';
+    document.getElementById('qrisDynamicContent').style.display = 'none';
+    document.getElementById('qrisDynamicError').style.display   = 'block';
+    document.getElementById('qrisErrorText').textContent        = message;
+}
+
+function cancelQrisDynamic() {
+    if (qrisCheckInterval) clearInterval(qrisCheckInterval);
+    midtransOrderId = null;
+    closeModal('modalQris');
+}
+@endif
+
+async function simulatePaid() {
+    if (!currentOrderId) return;
+
+    try {
+        const res  = await fetch(`/kasir/pos/payment/${currentOrderId}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body:    JSON.stringify({
+                payment_method: 'qris',
+                amount_paid:    parseFloat(calcTotal()),
+            }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            if (qrisCheckInterval) clearInterval(qrisCheckInterval);
+            closeModal('modalQris');
+            document.getElementById('successInfo').textContent = 'Pembayaran via QRIS berhasil (Simulasi)';
+            openModal('modalSuccess');
+        }
+    } catch (err) {
+        console.error(err);
     }
 }
 
@@ -483,12 +755,97 @@ function calcChange() {
     }
 }
 
-async function confirmPayment(method) {
-    const tableId = document.getElementById('tableSelect')?.value || null;
+// async function confirmPayment(method) {
+//     const tableId = document.getElementById('tableSelect')?.value || null;
 
+//     const orderData = {
+//         order_type: orderType,
+//         table_id:   tableId ? parseInt(tableId) : null,
+//         notes:      document.getElementById('orderNotes').value,
+//         items:      Object.values(cart).map(i => ({
+//             menu_id:  parseInt(i.menu_id),
+//             quantity: parseInt(i.quantity),
+//             notes:    i.notes || '',
+//         })),
+//     };
+
+//     console.log('Order data:', orderData); // debug
+
+//     try {
+//         const orderRes  = await fetch('{{ route("kasir.pos.store") }}', {
+//             method:  'POST',
+//             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+//             body:    JSON.stringify(orderData),
+//         });
+
+//         // Tangkap pesan error validasi
+//         if (!orderRes.ok) {
+//             const errJson = await orderRes.json();
+//             console.log('Validation errors:', errJson);
+//             alert('Error: ' + JSON.stringify(errJson.errors ?? errJson.message));
+//             return;
+//         }
+
+//         const orderJson = await orderRes.json();
+//         if (!orderJson.success) {
+//             alert('Gagal membuat order: ' + orderJson.message);
+//             return;
+//         }
+
+//         currentOrderId   = orderJson.order_id;
+//         const amountPaid = method === 'cash'
+//             ? parseFloat(document.getElementById('cashReceived').value)
+//             : orderJson.final_amount;
+
+//         const payRes  = await fetch(`/kasir/pos/payment/${currentOrderId}`, {
+//             method:  'POST',
+//             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+//             body:    JSON.stringify({ payment_method: method, amount_paid: amountPaid }),
+//         });
+
+//         if (!payRes.ok) {
+//             const errJson = await payRes.json();
+//             console.log('Payment errors:', errJson);
+//             alert('Error pembayaran: ' + JSON.stringify(errJson.errors ?? errJson.message));
+//             return;
+//         }
+
+//         const payJson = await payRes.json();
+//         if (!payJson.success) {
+//             alert('Gagal bayar: ' + payJson.message);
+//             return;
+//         }
+
+//         closeModal('modalCash');
+//         closeModal('modalQris');
+
+//         document.getElementById('successInfo').textContent = method === 'cash'
+//             ? `Kembalian: Rp ${fmtNum(payJson.change)}`
+//             : 'Pembayaran via QRIS berhasil';
+//         openModal('modalSuccess');
+
+//     } catch (err) {
+//         alert('Terjadi kesalahan. Coba lagi.');
+//         console.error(err);
+//     }
+// }
+
+async function confirmPayment(method) {
+    @if($settings['qris_type'] === 'dynamic')
+    // QRIS dinamis — order sudah dibuat, tinggal konfirmasi manual jika perlu
+    if (method === 'qris') {
+        if (qrisCheckInterval) clearInterval(qrisCheckInterval);
+        closeModal('modalQris');
+        document.getElementById('successInfo').textContent = 'Pembayaran via QRIS dikonfirmasi';
+        openModal('modalSuccess');
+        return;
+    }
+    @endif
+
+    // Cash atau QRIS statis
     const orderData = {
         order_type: orderType,
-        table_id:   tableId ? parseInt(tableId) : null,
+        table_id:   document.getElementById('tableSelect')?.value || null,
         notes:      document.getElementById('orderNotes').value,
         items:      Object.values(cart).map(i => ({
             menu_id:  parseInt(i.menu_id),
@@ -497,28 +854,14 @@ async function confirmPayment(method) {
         })),
     };
 
-    console.log('Order data:', orderData); // debug
-
     try {
         const orderRes  = await fetch('{{ route("kasir.pos.store") }}', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
             body:    JSON.stringify(orderData),
         });
-
-        // Tangkap pesan error validasi
-        if (!orderRes.ok) {
-            const errJson = await orderRes.json();
-            console.log('Validation errors:', errJson);
-            alert('Error: ' + JSON.stringify(errJson.errors ?? errJson.message));
-            return;
-        }
-
         const orderJson = await orderRes.json();
-        if (!orderJson.success) {
-            alert('Gagal membuat order: ' + orderJson.message);
-            return;
-        }
+        if (!orderJson.success) { alert('Gagal membuat order: ' + orderJson.message); return; }
 
         currentOrderId   = orderJson.order_id;
         const amountPaid = method === 'cash'
@@ -530,19 +873,8 @@ async function confirmPayment(method) {
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
             body:    JSON.stringify({ payment_method: method, amount_paid: amountPaid }),
         });
-
-        if (!payRes.ok) {
-            const errJson = await payRes.json();
-            console.log('Payment errors:', errJson);
-            alert('Error pembayaran: ' + JSON.stringify(errJson.errors ?? errJson.message));
-            return;
-        }
-
         const payJson = await payRes.json();
-        if (!payJson.success) {
-            alert('Gagal bayar: ' + payJson.message);
-            return;
-        }
+        if (!payJson.success) { alert('Gagal bayar: ' + payJson.message); return; }
 
         closeModal('modalCash');
         closeModal('modalQris');
