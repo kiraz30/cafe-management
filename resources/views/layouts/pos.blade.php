@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>POS - {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- Favicon --}}
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <link rel="stylesheet" href="{{ asset('css/pos.css') }}">
 </head>
 <body>
@@ -16,8 +18,8 @@
         <span style="font-size: 13px; color: rgba(255,255,255,0.6);">
             {{ auth()->user()->name }}
         </span>
-        <a href="{{ auth()->user()->role === 'admin' 
-            ? route('admin.dashboard') 
+        <a href="{{ auth()->user()->role === 'admin'
+            ? route('admin.dashboard')
             : route('kasir.dashboard') }}">
             🏠 Dashboard</a>
         <form method="POST" action="{{ route('logout') }}" style="margin:0;">
@@ -33,5 +35,5 @@
 
 </body>
 </html>
- 
- 
+
+
