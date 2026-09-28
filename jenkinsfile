@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_DIR = '/var/www/cafe-app'
+    }
+
+    stages {
+        stage('Pull Kode') {
+            steps {
+                sh '''
+                    cd "$APP_DIR"
+                    git pull origin master
+                '''
+            }
+        }
+
+        stage('Install Dependency PHP') {
+            steps {
+                sh '''
+                    cd "$APP_DIR"
+                    composer install --no-dev --optimize-autoloader --no-interaction
+                '''
+            }
+        }
+
+        stage('Build Asset Frontend') {
+            steps {
+                sh '''
+                    cd "$APP_DIR"
+                    npm ci
+                    npm run build
+                '''
+            }
+        }
+
+        stage('Migration Database') {
+            steps {
+                sh '''
+                    cd "$APP_DIR"
+                    php artisan migrate --force
+                '''
+            }
+        }
+
+        stage('Refresh Cache') {
+            steps {
+                sh '''
+                    cd "$APP_DIR"
+                    php artisan config:clear
+                    php artisan config:cache
+                    php artisan route:cache
+                    php artisan view:cache
+                '''
+            }
+        }
+    }
+
+    post {
+        success { echo 'Deploy berhasil.' }
+        failure { echo 'Deploy gagal, cek Console Output.' }
+    }
+}
